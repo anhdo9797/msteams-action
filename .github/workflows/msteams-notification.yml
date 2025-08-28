@@ -16,4 +16,4 @@ jobs:
         TITLE: "GitHub Action"
         BODY: "Success"
         MS_TEAMS_WEBHOOK: ${{ secrets.MSTEAMS_WEBHOOK }}
-        MENTIONS: "channel" 
+        MENTIONS: "dcpanh@tenomad.com" 
