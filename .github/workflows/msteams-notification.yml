@@ -15,5 +15,5 @@ jobs:
       with: 
         TITLE: "Deployment Notification"
         BODY: "🚀 New deployment completed successfully!"
-        MS_TEAMS_WEBHOOK: ${{ secrets.TEAMS_WEBHOOK }}
+        MS_TEAMS_WEBHOOK: ${{ secrets.MSTEAMS_WEBHOOK }}
         MENTIONS: ${{ secrets.MENTIONS }}
