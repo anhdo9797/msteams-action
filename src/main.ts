@@ -1,88 +1,82 @@
 import * as core from "@actions/core";
-import fetch from "node-fetch";
+import request from "request";
+
+interface Mention {
+    id: string; // Đối với user, đây là email (UPN) của họ
+    name: string;
+}
 
 async function main() {
-	try {
-		const title: string = core.getInput("TITLE", { required: true });
-		const body: string = core.getInput("BODY", { required: true });
-		const teamsWebhook: string = core.getInput("MS_TEAMS_WEBHOOK", { required: true });
-		const mentions: string = core.getInput("MENTIONS", { required: false });
-		sendTeamsNotification(title, body, teamsWebhook, mentions);
-	} catch (err) {
-		core.error("❌ Failed");
-		core.setFailed(err.message);
-	}
+    try {
+        const title: string = core.getInput("TITLE", { required: true });
+        const body: string = core.getInput("BODY", { required: true });
+        const teamsWebhook: string = core.getInput("MS_TEAMS_WEBHOOK", { required: true });
+        const mentionsInput: string = core.getInput("MENTIONS", { required: false });
+
+        await sendTeamsNotification(title, body, teamsWebhook, mentionsInput);
+
+    } catch (err) {
+        core.error("❌ Failed");
+        core.setFailed(err.message);
+    }
 }
 
 
 /**
- * Sends a MS Teams notification
+ * Sends a MS Teams notification with mentions
  * @param title
  * @param body
  * @param webhookUrl
- * @param mentions
+ * @param mentionsInput - A JSON string of the mentions array
  */
-async function sendTeamsNotification(title: string, body: string, webhookUrl: string, mentions?: string) {
-	let messageText = body;
-	let entities: any[] = [];
+async function sendTeamsNotification(title: string, body: string, webhookUrl: string, mentionsInput: string) {
+    let mentions: Mention[] = [];
+    let processedBody = body;
 
-	if (mentions) {
-		if (mentions.toLowerCase() === 'channel') {
-			// Mention entire channel
-			messageText = `<at>channel</at> ${body}`;
-			entities.push({
-				"@type": "mention",
-				"text": "<at>channel</at>",
-				"mentioned": {
-					"id": "channel",
-					"name": "channel"
-				}
-			});
-		} else {
-			// Mention specific users
-			const userEmails = mentions.split(',').map(email => email.trim());
-			userEmails.forEach(email => {
-				messageText = `<at>${email}</at> ${messageText}`;
-				entities.push({
-					"@type": "mention",
-					"text": `<at>${email}</at>`,
-					"mentioned": {
-						"id": email,
-						"name": email.split('@')[0] // Use part before @ as display name
-					}
-				});
-			});
-		}
-	}
+    if (mentionsInput && mentionsInput.length > 0) {
+        try {
+            mentions = JSON.parse(mentionsInput);
 
-	const payload = {
-		"@context": "http://schema.org/extensions",
-		"@type": "MessageCard",
-		"title": title,
-		"text": messageText,
-		...(entities.length > 0 && { "entities": entities })
-	};
+            const mentionTexts = mentions.map(mention => `<at>${mention.name}</at>`);
+            if (mentionTexts.length > 0) {
+                processedBody += '<br><br>' + mentionTexts.join(' ');
+            }
+        } catch (e) {
+            core.warning(`⚠️ Failed to parse MENTIONS input. It was not a valid JSON: ${e.message}`);
+        }
+    }
 
-	try {
-		const response = await fetch(webhookUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json"
-			},
-			body: JSON.stringify(payload)
-		});
-
-		if (response.ok) {
-			core.info("✅ Teams notification sent successfully");
-		} else {
-			const errorText = await response.text();
-			core.error(`❌ Failed to send Teams notification: ${response.status} ${errorText}`);
-			core.setFailed(`Teams API returned ${response.status}`);
-		}
-	} catch (error) {
-		core.error(`❌ Failed to send Teams notification: ${error.message}`);
-		core.setFailed(error.message);
-	}
+    const payload = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary": title,
+        "title": title,
+        "text": processedBody,
+        "potentialAction": [],
+        "mentions": mentions.map(m => ({
+            "type": "mention",
+            "text": `<at>${m.name}</at>`,
+            "mentioned": {
+                "id": m.id,
+                "name": m.name
+            }
+        }))
+    };
+    
+    request(webhookUrl, {
+        method: "POST",
+        body: JSON.stringify(payload), 
+        headers: { 'Content-Type': 'application/json' }
+    }, (error, response, body) => {
+        if (error) {
+            core.setFailed(`Request failed: ${error}`);
+        } else if (response.statusCode >= 400) {
+            core.setFailed(`Failed to send notification. Status: ${response.statusCode}. Body: ${body}`);
+        } else {
+            core.info('✅ Notification sent successfully!');
+        }
+    });
 }
 
 main();

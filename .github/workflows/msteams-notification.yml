@@ -16,4 +16,7 @@ jobs:
         TITLE: "GitHub Action"
         BODY: "Success"
         MS_TEAMS_WEBHOOK: ${{ secrets.MSTEAMS_WEBHOOK }}
-        MENTIONS: "dcpanh@tenomad.com" 
+        MENTIONS: >
+            [
+              {"id": "dcpanh@tenomad.com", "name": "Anh Đỗ"}
+            ]
