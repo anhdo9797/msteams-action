@@ -46,33 +46,57 @@ async function sendTeamsNotification(title: string, body: string, webhookUrl: st
         }
     }
 
-    const payload = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary": title,
-        "title": title,
-        "text": processedBody,
-        "potentialAction": [],
-		"sections": [{
-			"activityTitle": "Larry Bryant created a new task",
-			"activitySubtitle": "On Project Tango",
-			"activityImage": "https://adaptivecards.io/content/cats/3.png",
-			"facts": [{
-				"name": "Assigned to",
-				"value": "baophan@tenomad.com"
-			}],
-			"markdown": true
-		}],
-        "mentions": mentions.map(m => ({
-            "type": "mention",
-            "text": `<at>${m.name}</at>`,
-            "mentioned": {
-                "id": m.id,
-                "name": m.name
-            }
-        }))
-    };
+    // const payload = {
+    //     "@type": "MessageCard",
+    //     "@context": "http://schema.org/extensions",
+    //     "themeColor": "0076D7",
+    //     "summary": title,
+    //     "title": title,
+    //     "text": processedBody,
+    //     "potentialAction": [],
+		 
+    //     "mentions": mentions.map(m => ({
+    //         "type": "mention",
+    //         "text": `<at>${m.name}</at>`,
+    //         "mentioned": {
+    //             "id": m.id,
+    //             "name": m.name
+    //         }
+    //     }))
+    // };
+	const payload = {
+		"type": "message",
+		"attachments": [{
+			"contentType": "application/vnd.microsoft.card.adaptive",
+			"content": {
+				"type": "AdaptiveCard",
+				"body": [{
+						"type": "TextBlock",
+						"size": "Medium",
+						"weight": "Bolder",
+						"text": "Sample Adaptive Card with User Mention"
+					},
+					{
+						"type": "TextBlock",
+						"text": "[Project Name] Hi, <at>Sample_Name</at>. A redmine ticket has been assigned to you."
+					}
+				],
+				"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+				"version": "1.0",
+				"msteams": {
+									"width": "Full",
+					"entities": [{
+						"type": "mention",
+						"text": "<at>Sample_Name</at>",
+						"mentioned": {
+							"id": "baophan@tenomad.com", // For confidentiality purposes
+							"name": "Bảo Phan"
+						}
+					}]
+				}
+			}
+		}]
+	}
     
     request(webhookUrl, {
         method: "POST",
