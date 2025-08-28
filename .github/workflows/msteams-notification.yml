@@ -18,5 +18,5 @@ jobs:
         MS_TEAMS_WEBHOOK: ${{ secrets.MSTEAMS_WEBHOOK }}
         MENTIONS: >
             [
-              {"id": "dcpanh@tenomad.com", "name": "Anh Đỗ"}
+              {"id": "baophan@tenomad.com", "name": "Bảo Phan"}
             ]
