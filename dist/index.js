@@ -32809,6 +32809,16 @@ function sendTeamsNotification(title, body, webhookUrl, mentionsInput) {
             "title": title,
             "text": processedBody,
             "potentialAction": [],
+            "sections": [{
+                    "activityTitle": "Larry Bryant created a new task",
+                    "activitySubtitle": "On Project Tango",
+                    "activityImage": "https://adaptivecards.io/content/cats/3.png",
+                    "facts": [{
+                            "name": "Assigned to",
+                            "value": "baophan@tenomad.com"
+                        }],
+                    "markdown": true
+                }],
             "mentions": mentions.map(m => ({
                 "type": "mention",
                 "text": `<at>${m.name}</at>`,
