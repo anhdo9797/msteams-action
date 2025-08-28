@@ -1,4 +1,4 @@
-name: 'MS Teams Notification'
+name: 'Teams Notify with Mentions'
 description: 'GitHub Action to send a message to MS Teams with user mentions support'
 author: 'anhdo9797'
 inputs:
