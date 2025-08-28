@@ -10,6 +10,9 @@ inputs:
   MS_TEAMS_WEBHOOK:  
     description: 'If set, A MS Teams notification will be sent to this webhook'
     required: true
+  MENTIONS:
+    description: 'Comma-separated list of emails to mention (e.g., "user1@company.com,user2@company.com") or "channel" to mention everyone'
+    required: false
 runs:
   using: "node12"
   main: "dist/index.js"
