@@ -5,17 +5,16 @@
     "description": "GitHub Action to send a message to MS Teams",
     "main": "dist/index.js",
     "scripts": {
-        "build": "ncc build src\\main.ts"
+        "build": "ncc build src/main.ts -o dist",
+        "package": "npm run build"
     },
     "dependencies": {
-        "@actions/core": "1.2.3",
-        "@types/request": "^2.48.4",
-        "request": "2.88.2"
+        "@actions/core": "^1.10.0",
+        "node-fetch": "^2.7.0"
     },
     "devDependencies": {
-        "@types/node": "^13.1.6",
-        "@zeit/ncc": "^0.21.0",
-        "tslint": "^5.20.1",
-        "typescript": "^3.7.4"
+        "@types/node": "^20.0.0",
+        "@vercel/ncc": "^0.38.0",
+        "typescript": "^5.0.0"
     }
 }

@@ -1,5 +1,6 @@
-name: 'MS Teams Action'
-description: 'GitHub Action to send a message to MS Teams'
+name: 'MS Teams Notification'
+description: 'GitHub Action to send a message to MS Teams with user mentions support'
+author: 'anhdo9797'
 inputs:
   TITLE:
     description: 'Title of the message'
@@ -8,10 +9,13 @@ inputs:
     description: 'Body of the message'
     required: true
   MS_TEAMS_WEBHOOK:  
-    description: 'If set, A MS Teams notification will be sent to this webhook'
+    description: 'Microsoft Teams webhook URL for sending notifications'
     required: true
+  MENTIONS:
+    description: 'JSON array of users to mention. Each user object should have "id" (email) and "name" (display name) properties'
+    required: false
 runs:
-  using: "node12"
+  using: "node20"
   main: "dist/index.js"
 branding:
   icon: 'message-circle'  
