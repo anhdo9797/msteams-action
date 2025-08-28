@@ -13,10 +13,7 @@ jobs:
     steps:
     - uses: anhdo9797/msteams-action@master
       with: 
-        TITLE: "GitHub Action"
-        BODY: "Success"
-        MS_TEAMS_WEBHOOK: ${{ secrets.MSTEAMS_WEBHOOK }}
-        MENTIONS: >
-            [
-              {"id": "baophan@tenomad.com", "name": "Bảo Phan"}
-            ]
+        TITLE: "Deployment Notification"
+        BODY: "🚀 New deployment completed successfully!"
+        MS_TEAMS_WEBHOOK: ${{ secrets.TEAMS_WEBHOOK }}
+        MENTIONS: ${{ secrets.MENTIONS }}

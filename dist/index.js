@@ -32788,69 +32788,68 @@ function main() {
 function sendTeamsNotification(title, body, webhookUrl, mentionsInput) {
     return __awaiter(this, void 0, void 0, function* () {
         let mentions = [];
-        let processedBody = body;
         if (mentionsInput && mentionsInput.length > 0) {
             try {
                 mentions = JSON.parse(mentionsInput);
-                const mentionTexts = mentions.map(mention => `<at>${mention.name}</at>`);
-                if (mentionTexts.length > 0) {
-                    processedBody += '<br><br>' + mentionTexts.join(' ');
-                }
+                core.info(`✅ Parsed ${mentions.length} mentions successfully`);
             }
             catch (e) {
                 core.warning(`⚠️ Failed to parse MENTIONS input. It was not a valid JSON: ${e.message}`);
             }
         }
-        // const payload = {
-        //     "@type": "MessageCard",
-        //     "@context": "http://schema.org/extensions",
-        //     "themeColor": "0076D7",
-        //     "summary": title,
-        //     "title": title,
-        //     "text": processedBody,
-        //     "potentialAction": [],
-        //     "mentions": mentions.map(m => ({
-        //         "type": "mention",
-        //         "text": `<at>${m.name}</at>`,
-        //         "mentioned": {
-        //             "id": m.id,
-        //             "name": m.name
-        //         }
-        //     }))
-        // };
+        const getTags = () => {
+            return mentions.map((mention) => {
+                return `<at>${mention.name}</at>`;
+            }).join(", ");
+        };
+        const getEntities = () => {
+            return mentions.map((mention) => {
+                return {
+                    "type": "mention",
+                    "text": `<at>${mention.name}</at>`,
+                    "mentioned": {
+                        "id": mention.id,
+                        "name": mention.name
+                    }
+                };
+            });
+        };
+        // Build payload with mentions
         const payload = {
             "type": "message",
             "attachments": [{
                     "contentType": "application/vnd.microsoft.card.adaptive",
                     "content": {
-                        "type": "AdaptiveCard",
-                        "body": [{
+                        "type": "MessageCard",
+                        "body": [
+                            {
                                 "type": "TextBlock",
                                 "size": "Medium",
                                 "weight": "Bolder",
-                                "text": "Sample Adaptive Card with User Mention"
+                                "text": title
                             },
                             {
                                 "type": "TextBlock",
-                                "text": "[Project Name] Hi, <at>Sample_Name</at>. A redmine ticket has been assigned to you."
+                                "text": body,
+                                "wrap": true
+                            },
+                            {
+                                "type": "TextBlock",
+                                "text": getTags()
                             }
                         ],
                         "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
                         "version": "1.0",
                         "msteams": {
                             "width": "Full",
-                            "entities": [{
-                                    "type": "mention",
-                                    "text": "<at>Sample_Name</at>",
-                                    "mentioned": {
-                                        "id": "baophan@tenomad.com", // For confidentiality purposes
-                                        "name": "Bảo Phan"
-                                    }
-                                }]
+                            "entities": getEntities()
                         }
                     }
                 }]
         };
+        // Log payload for debugging
+        core.info('📤 Sending payload to Teams webhook');
+        core.debug(`Payload: ${JSON.stringify(payload, null, 2)}`);
         (0, request_1.default)(webhookUrl, {
             method: "POST",
             body: JSON.stringify(payload),
