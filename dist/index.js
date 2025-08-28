@@ -32769,8 +32769,8 @@ function main() {
             const title = core.getInput("TITLE", { required: true });
             const body = core.getInput("BODY", { required: true });
             const teamsWebhook = core.getInput("MS_TEAMS_WEBHOOK", { required: true });
-            const mentions = core.getInput("MENTIONS", { required: false });
-            sendTeamsNotification(title, body, teamsWebhook, mentions);
+            const mentionsInput = core.getInput("MENTIONS", { required: false });
+            yield sendTeamsNotification(title, body, teamsWebhook, mentionsInput);
         }
         catch (err) {
             core.error("❌ Failed");
@@ -32779,59 +32779,58 @@ function main() {
     });
 }
 /**
- * Sends a MS Teams notification
+ * Sends a MS Teams notification with mentions
  * @param title
  * @param body
  * @param webhookUrl
- * @param mentions
+ * @param mentionsInput - A JSON string of the mentions array
  */
-function sendTeamsNotification(title, body, webhookUrl, mentions) {
+function sendTeamsNotification(title, body, webhookUrl, mentionsInput) {
     return __awaiter(this, void 0, void 0, function* () {
-        let messageText = body;
-        let entities = [];
-        if (mentions) {
-            if (mentions.toLowerCase() === 'channel') {
-                // Mention entire channel
-                messageText = `<at>channel</at> ${body}`;
-                entities.push({
-                    "@type": "mention",
-                    "text": "<at>channel</at>",
-                    "mentioned": {
-                        "id": "channel",
-                        "name": "channel"
-                    }
-                });
+        let mentions = [];
+        let processedBody = body;
+        if (mentionsInput && mentionsInput.length > 0) {
+            try {
+                mentions = JSON.parse(mentionsInput);
+                const mentionTexts = mentions.map(mention => `<at>${mention.name}</at>`);
+                if (mentionTexts.length > 0) {
+                    processedBody += '<br><br>' + mentionTexts.join(' ');
+                }
             }
-            else {
-                // Mention specific users
-                const userEmails = mentions.split(',').map(email => email.trim());
-                userEmails.forEach(email => {
-                    messageText = `<at>${email}</at> ${messageText}`;
-                    entities.push({
-                        "@type": "mention",
-                        "text": `<at>${email}</at>`,
-                        "mentioned": {
-                            "id": email,
-                            "name": email.split('@')[0] // Use part before @ as display name
-                        }
-                    });
-                });
+            catch (e) {
+                core.warning(`⚠️ Failed to parse MENTIONS input. It was not a valid JSON: ${e.message}`);
             }
         }
-        const payload = Object.assign({ "@context": "http://schema.org/extensions", "@type": "MessageCard", "title": title, "text": messageText }, (entities.length > 0 && { "entities": entities }));
+        const payload = {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "themeColor": "0076D7",
+            "summary": title,
+            "title": title,
+            "text": processedBody,
+            "potentialAction": [],
+            "mentions": mentions.map(m => ({
+                "type": "mention",
+                "text": `<at>${m.name}</at>`,
+                "mentioned": {
+                    "id": m.id,
+                    "name": m.name
+                }
+            }))
+        };
         (0, request_1.default)(webhookUrl, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'application/json' }
         }, (error, response, body) => {
             if (error) {
-                core.error(`❌ Failed to send Teams notification: ${error.message}`);
-                core.setFailed(error.message);
+                core.setFailed(`Request failed: ${error}`);
+            }
+            else if (response.statusCode >= 400) {
+                core.setFailed(`Failed to send notification. Status: ${response.statusCode}. Body: ${body}`);
             }
             else {
-                core.info("✅ Teams notification sent successfully");
+                core.info('✅ Notification sent successfully!');
             }
         });
     });
